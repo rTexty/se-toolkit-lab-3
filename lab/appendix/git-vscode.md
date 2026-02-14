@@ -43,13 +43,13 @@
 >
 > Example: `software-engineering-toolkit`
 
-1. [Run using the `Command Palette`](./appendix/vs-code.md#command-palette):
+1. [Run using the `Command Palette`](./vs-code.md#command-palette):
    `File: Open Folder...`
 2. Find the directory `<directory-name>` that you created.
 3. Open this directory.
 
    `VS Code` should now open in that directory.
-4. [Open `Folders`](./appendix/vs-code.md#open-folders).
+4. [Open `Folders`](./vs-code.md#open-folders).
 5. Look at `FOLDERS`.
 6. You should see `<DIRECTORY-NAME>` there.
 
@@ -70,9 +70,9 @@
 ### Clone the repo using the `VS Code Terminal`
 
 1. Open `VS Code` in the `software-engineering-toolkit`.
-1. [Open the `VS Code Terminal`](./appendix/vs-code.md#open-the-vs-code-terminal).
+1. [Open the `VS Code Terminal`](./vs-code.md#open-the-vs-code-terminal).
    You should see `software-engineering-toolkit` as your [current working directory](./shell.md#current-working-directory).
-1. [Run using the `VS Code Terminal`](./appendix/vs-code.md#run-a-command-using-the-vs-code-terminal):
+1. [Run using the `VS Code Terminal`](./vs-code.md#run-a-command-using-the-vs-code-terminal):
 
     ```terminal
     git clone <repo-url>
@@ -84,7 +84,7 @@
     git clone <repo-url>
     ```
 
-1. [Run using the `VS Code Terminal`](./appendix/vs-code.md#run-a-command-using-the-vs-code-terminal):
+1. [Run using the `VS Code Terminal`](./vs-code.md#run-a-command-using-the-vs-code-terminal):
 
    ```terminal
    ls
@@ -138,7 +138,7 @@ on the `<branch-name>` branch in your cloned repo on your computer.
 
 Check whether you have such conflicts:
 
-1. Look at the [`Status Bar`](../appendix/vs-code.md#status-bar).
+1. Look at the [`Status Bar`](../vs-code.md#status-bar).
 
    <img alt="Commit Conflict" src="../images/appendix/vs-code/status-bar-commit-conflict.png" style="width:400px"></img>
 
@@ -158,7 +158,7 @@ We call that branch `origin/<branch-name>`.
 
 ### Pull changes from `origin/<branch-name>` using the `VS Code Terminal`
 
-1. [Run using the `VS Code Terminal`](../appendix/vs-code.md#run-a-command-using-the-vs-code-terminal):
+1. [Run using the `VS Code Terminal`](../vs-code.md#run-a-command-using-the-vs-code-terminal):
 
    ```terminal
    git pull origin <branch-name>
@@ -172,7 +172,7 @@ We call that branch `origin/<branch-name>`.
 
 ### Pull changes from `origin/<branch-name>` using `GitLens`
 
-1. [Run using the `Command Palette`](../appendix/vs-code.md#run-a-command-using-the-command-palette):
+1. [Run using the `Command Palette`](../vs-code.md#run-a-command-using-the-command-palette):
    `GitLens: Pull`
 
 ## Stage using the `Source Control`
