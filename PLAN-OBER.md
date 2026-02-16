@@ -1,370 +1,251 @@
-# Lab 3 — OBER Plan
+# Lab 3 — OBER Plan (Beginner-First)
 
 ## Context
 
-Lab 3 builds on Lab 2, where students:
+Lab 3 builds on Lab 2, where students already:
 
-- Ran a FastAPI web server locally
-- Fixed a bug and submitted a PR
-- Ran the server using Docker Compose (with Caddy reverse proxy)
+- Ran and fixed a FastAPI service
+- Used issues, branches, PRs, and reviews
+- Used Docker Compose
 - Deployed to a Linux VM
 
-Starting from Lab 3, all labs build a single product: an **educational recommender platform** inspired by the [OBER paper](https://arxiv.org/abs/2509.18186) (Outcome-Based Educational Recommender). The platform manages learning content, tracks learner progress against defined outcomes, and eventually recommends what to learn next.
+From Lab 3 onward, labs build one product: an outcome-based educational recommender inspired by OBER ([arXiv:2509.18186](https://arxiv.org/abs/2509.18186)).
 
-The codebase carries forward from Lab 2 through Lab 9. Each lab adds a meaningful capability.
+The platform centers on:
+
+- Learning content (`items`)
+- Learning goals (`outcomes`)
+- Learners (`learners`)
+- Interactions (`interaction_logs`)
+- Item-outcome mapping (`alignments`)
+- Progress estimation (`mastery`)
+
+---
+
+## Starter repo assumptions
+
+Students get a repo (derived from Lab 2) where:
+
+- PostgreSQL is already configured
+- DB is pre-seeded with anonymized real-world style data
+- `items`, `outcomes`, `learners` read endpoints already work
+- `/docs` (Swagger UI) already works
+- A small example test file exists
+
+This lets us focus on API extension, business logic, testing, and security.
+
+---
+
+## Beginner guardrails (REST-lite)
+
+Many students see REST for the first time here. We keep scope intentionally small:
+
+1. Resource paths use nouns (`/interactions`, `/alignments`).
+2. Core methods only (`GET`, `POST`, `PUT`).
+3. Core statuses only (`200`, `201`, `404`, `422`, `401`, `403`).
+4. Query params for filtering/pagination.
+5. Pydantic schemas as API contract.
+
+No advanced REST topics in this lab (HATEOAS, versioning strategies, caching semantics).
 
 ---
 
 ## Story
 
-> Your senior engineer says:
->
-> "We're building an e-learning platform that recommends content to students based on their progress toward learning outcomes.
->
-> The data team has loaded up a database with anonymized data from a real educational app: items (content), outcomes (learning goals), learners, and their interaction logs.
->
-> We already have read endpoints for items, outcomes, and learners. Your job is to extend the API, add the missing pieces, write proper tests, and make the server production-ready."
+> "Data is already loaded: items, outcomes, learners, and interaction logs.
+> Your job is to extend the API safely:
+> expose interactions, add alignments, compute mastery,
+> secure the service, and deploy it to a hardened VM."
 
 ---
 
-## What students receive (starter repo)
+## Required tasks
 
-The starter codebase is a fork of Lab 2, upgraded with:
+### Task 1: Explore API docs and existing endpoints (no coding)
 
-- **PostgreSQL** added to `docker-compose.yml` (replacing JSON file storage)
-- **SQLAlchemy** models and a session setup
-- **Pre-seeded database** with anonymized data from a real educational app:
+Students:
 
-| Table | ~Rows | Key columns |
-|-------|-------|-------------|
-| `items` | 100 | `id`, `title`, `type`, `description` |
-| `outcomes` | 30 | `id`, `title`, `parent_id` (tree hierarchy) |
-| `learners` | 100 | `id`, `created_at` |
-| `interaction_logs` | 5,000 | `id`, `learner_id`, `item_id`, `progress` (0.0–1.0), `started_at`, `session_number` |
+- Open `/docs`
+- Explore `GET /learners`, `GET /learners/{id}`, `GET /outcomes`, `GET /outcomes/{id}`
+- Run sample calls and inspect statuses + response schemas
+- Submit short observations (method/path/status/shape)
 
-- **Pre-existing endpoints** (already implemented, serve as patterns to follow):
-  - `GET /items`, `GET /items/{id}`
-  - `GET /outcomes`, `GET /outcomes/{id}` (includes `parent_id` for tree structure)
-  - `GET /learners`, `GET /learners/{id}`
-  - `GET /docs` (Swagger UI)
-  - `GET /status`
+Goal:
 
-- **One example test file** (`test_items.py`) with 2 tests, demonstrating the TestClient + DB fixture pattern
+- Understand the API contract before writing code
+- Learn by reading implemented "standard" endpoints first
 
-Note: the `interaction_logs` table has data but **no endpoints** — students implement those.
+Autochecker evidence:
+
+- Process checks (`issue_exists`, `pr_merged_exists`) for task completion workflow
 
 ---
 
-## Proposed structure
+### Task 2: Implement interaction endpoints by example
 
-### Task 0: Explore the API (Swagger)
+Students implement:
 
-**Students do:**
+- `GET /interactions` with optional filters + pagination
+- `POST /interactions` with validation
 
-- Run `docker compose up`, open `/docs` in the browser
-- Try each existing endpoint: `GET /items`, `GET /outcomes`, `GET /learners/{id}`
-- Look at the auto-generated request/response schemas
-- Read the existing code: models → service → router pattern
-- Create a GitHub issue: `[Task 0] Explore the API`
-- Paste 3 Swagger responses (screenshots or JSON) in the issue body, close it
+Suggested request model:
 
-**Key concepts:** OpenAPI, Swagger UI, interactive API docs, API contract.
+- `learner_id`, `item_id`, `progress`, `session_number`
 
-**Why first:** Immediate visual payoff. Students see something tangible before writing code. They also learn the codebase patterns they'll replicate.
+Core rules:
 
-**Autochecker:**
+- `progress` in `[0.0, 1.0]`
+- unknown `learner_id` / `item_id` rejected
+- `POST` returns `201`
 
-- `repo_exists`, `repo_is_fork`, `repo_has_issues`
-- `issue_exists`: title matches `\[Task 0\]`, state closed
+Autochecker evidence:
 
----
-
-### Task 1: Implement interaction log endpoints
-
-The `interaction_logs` table exists and has data, but there are no API endpoints for it. Students look at the existing items/outcomes endpoints as examples and replicate the pattern.
-
-**Students implement:**
-
-```
-GET  /interactions?learner_id={id}&item_id={id}&limit=20&offset=0
-POST /interactions
-     body: { learner_id, item_id, progress, session_number }
-```
-
-**Requirements:**
-
-- Both query filters are optional, combinable
-- Validate: `progress` must be in `[0.0, 1.0]` → 422 otherwise
-- Validate: `learner_id` and `item_id` must reference existing records → 404 otherwise
-- Pagination via `limit` (default 20) and `offset` (default 0)
-- `POST` returns 201 with the created object (including generated `id` and `started_at`)
-
-**Key concepts:** REST conventions, query parameters, input validation, foreign key checks, HTTP status codes.
-
-**Autochecker:**
-
-- `http_check`: `POST /interactions` with valid body → 201
-- `http_check`: `POST /interactions` with `progress: 1.5` → 422
-- `http_check`: `POST /interactions` with nonexistent `learner_id` → 404 or 422
-- `http_check`: `GET /interactions?learner_id=L001` → 200, response is a list
-- `http_check`: `GET /interactions?learner_id=L001&limit=5` → ≤5 items in response
-- `issue_exists` + `pr_merged_exists` for the task
+- API behavior tests in repo (`clone_and_run`)
+- Optional deployment `http_check` for `GET /interactions`
+- Process checks (issue/PR)
 
 ---
 
-### Task 2: Create the alignments table and endpoints
+### Task 3: Add alignments table + endpoints
 
-This is the core [OBER](https://arxiv.org/abs/2509.18186) concept. Alignments define which items assess or promote which learning outcomes. The table doesn't exist yet — students create it from scratch (migration script or SQLAlchemy model + `create_all`).
+Students:
 
-**New table:**
+- Create table mapping `items` to `outcomes`
+- Implement endpoints to read, add, and edit mappings
 
-```sql
-alignments
-    id              SERIAL PRIMARY KEY
-    item_id         INTEGER REFERENCES items(id)
-    outcome_id      INTEGER REFERENCES outcomes(id)
-    relation_type   VARCHAR(20) CHECK (relation_type IN ('assesses', 'promotes'))
-    UNIQUE(item_id, outcome_id, relation_type)
-```
+Suggested endpoints:
 
-**New endpoints:**
+- `GET /alignments`
+- `POST /alignments`
+- `PUT /alignments/{id}`
 
-```
-GET    /alignments?outcome_id={id}&item_id={id}&relation_type=assesses
-POST   /alignments         → body: { item_id, outcome_id, relation_type }
-PATCH  /alignments/{id}    → partial update
-DELETE /alignments/{id}    → 204
-```
+Suggested fields:
 
-**Requirements:**
+- `item_id`
+- `outcome_id`
+- `relation_type` (`promotes` or `verifies`)
 
-- `relation_type` must be `'assesses'` or `'promotes'` → 422 otherwise
-- Duplicate `(item_id, outcome_id, relation_type)` → 409 Conflict
-- Foreign key validation — referenced item and outcome must exist
-- All `GET` filters are optional and combinable
-- `POST` returns 201
-- `DELETE` returns 204, subsequent `GET` by that id returns 404
+Core rules:
 
-**Why this matters:** Students are building the knowledge graph that connects learning content to learning goals. This is what makes the recommender "outcome-based" rather than popularity-based. In later labs, the ML model uses these alignments to weight recommendations.
+- relation type validation
+- FK validation for item/outcome
+- duplicate mapping protection
 
-**Autochecker:**
+Autochecker evidence:
 
-- `http_check`: `POST /alignments` with valid body → 201
-- `http_check`: `POST /alignments` with same body again → 409
-- `http_check`: `POST /alignments` with `relation_type: "invalid"` → 422
-- `http_check`: `GET /alignments?outcome_id=1` → 200, filtered list
-- `http_check`: `DELETE /alignments/{id}` → 204
-- `regex_in_file`: model file contains `alignments` table/class definition
-- `issue_exists` + `pr_merged_exists`
+- Table/model presence check (`regex_in_file`)
+- Endpoint behavior via tests (`clone_and_run`)
+- Process checks (issue/PR)
 
 ---
 
-### Task 3: Implement the mastery endpoint
+### Task 4: Implement mastery endpoint and test it properly
 
-This is the business logic challenge. Mastery answers the question: *"How well does a learner know each outcome?"* It requires joining data across interactions and alignments.
+Students implement:
 
-**Students implement:**
+- `GET /mastery/{learner_id}`
+- (optional companion) `GET /mastery/{learner_id}/total`
 
-```
-GET /learners/{id}/mastery?threshold=0.8
-```
+Simplified mastery logic:
 
-**Response:**
+1. Use alignments linked to outcomes.
+2. Use learner interactions to estimate progress per outcome.
+3. Return deterministic scores with clear response schema.
 
-```json
-[
-    {
-        "outcome_id": 1,
-        "outcome_title": "Fard Prayers",
-        "mastery_score": 0.72,
-        "items_studied": 3,
-        "items_total": 5,
-        "achieved": false
-    }
-]
-```
+Testing requirements:
 
-**Calculation (simplified from the real [namaz-recommender](https://arxiv.org/abs/2509.18186) codebase):**
+- happy path
+- no-data path
+- invalid learner
+- threshold/aggregation behavior
 
-1. For each outcome, find all items where `alignment.relation_type = 'assesses'`
-2. For each aligned item, find the learner's **best** progress (`MAX(progress)` across all their interactions with that item)
-3. `mastery_score` = mean of those best-progress values (0.0 if no interactions)
-4. `items_studied` = count of aligned items the learner has interacted with
-5. `items_total` = total aligned items for that outcome
-6. `achieved` = `mastery_score >= threshold`
+Autochecker evidence:
 
-**Requirements:**
-
-- Only return outcomes that have at least one alignment (with `relation_type = 'assesses'`)
-- `threshold` query param defaults to `0.8`
-- Nonexistent learner → 404
-- Outcomes where the learner has no interactions → `mastery_score: 0.0`, `achieved: false`
-
-**Why this matters:** Mastery is the metric the entire system optimizes for. The recommender (Lab 8) will try to maximize mastery. The dashboard (Lab 7) will visualize it. The Telegram bot (Lab 6) will show learners their progress.
-
-**Autochecker:**
-
-- `http_check`: `GET /learners/L001/mastery` → 200, response is a list with required keys
-- `http_check`: verify all `mastery_score` values are in `[0.0, 1.0]`
-- `http_check`: `GET /learners/NONEXISTENT/mastery` → 404
-- `http_check`: `GET /learners/L001/mastery?threshold=0.5` → at least as many `achieved: true` as with `0.8`
-- Deterministic check: create a known alignment + interaction via POST, then verify mastery reflects it
-- `issue_exists` + `pr_merged_exists`
+- `clone_and_run`: all tests pass
+- endpoint-level assertions in tests for schema and score range
 
 ---
 
-### Task 4: Write tests
+### Task 5: Security task (auth/permissions + server hardening)
 
-**Students implement:**
+This is one combined task with app and infra security.
 
-- **Interaction log tests** (at least 4): create, read with filter, validation error (progress out of range), pagination
-- **Alignment tests** (at least 4): create, duplicate → 409, delete + verify gone, filter by outcome
-- **Mastery tests** (at least 3): happy path with seeded data, empty mastery for learner with no interactions, 404 for nonexistent learner
+App security:
 
-Students follow the pattern in the provided `test_items.py` — use `TestClient` with a test database fixture.
+- Add simple authentication for write endpoints
+- Add permission checks (at least read vs write roles)
+- Correct status behavior:
+  - missing/invalid auth -> `401`
+  - insufficient permissions -> `403`
 
-All tests must pass: `docker compose run api pytest` exits 0.
+Server hardening:
 
-**Key concepts:** Automated testing, test isolation, fixtures, edge cases, TestClient.
+- Create non-root SSH user for operations
+- Configure firewall (`ufw`)
+- Configure fail2ban for SSH
+- Disable root password login
+- Create dedicated `checkbot` user for verification access
+- `checkbot` must be restricted (no sudo)
 
-**Autochecker:**
+Autochecker evidence:
 
-- `clone_and_run`: `uv sync && uv run pytest` → exit code 0
-- File glob: test files exist matching `test_*.py` with `def test_` functions (at least 11)
-- `issue_exists` + `pr_merged_exists`
-
----
-
-### Task 5: Harden the server and set up checkbot access
-
-The VM from Lab 2 is a fresh Ubuntu with root SSH access. Students make it production-ready.
-
-**5a. Create a non-root user:**
-
-- `adduser <username>` with sudo privileges
-- Set up SSH key authentication for this user
-- Verify: `ssh <username>@<vm_ip>` works without a password
-
-**5b. Firewall (ufw):**
-
-- `ufw allow 22/tcp` (SSH)
-- `ufw allow 80/tcp` (HTTP — Caddy)
-- `ufw allow 443/tcp` (HTTPS — for later labs)
-- `ufw enable`
-- Everything else is blocked
-
-**5c. fail2ban:**
-
-- Install and enable fail2ban
-- Default SSH jail active (bans IPs after failed login attempts)
-
-**5d. Disable root password login:**
-
-- `/etc/ssh/sshd_config`: `PermitRootLogin prohibit-password` (key-only)
-- `PasswordAuthentication no`
-- Restart sshd
-
-**5e. Create `checkbot` user:**
-
-- Dedicated user, no sudo access
-- Add the course-provided public SSH key to `checkbot`'s `authorized_keys`
-- The autochecker uses this account to verify the deployment and hardening
-
-**Key concepts:** Principle of least privilege, SSH key auth, firewall, brute-force protection, service accounts.
-
-**Autochecker (via SSH as `checkbot`):**
-
-- SSH connects as `checkbot@{server_ip}` → success
-- `sudo -n whoami` → fails (checkbot has no sudo)
-- `systemctl is-active fail2ban` → active
-- Grep `/etc/ssh/sshd_config` → `PermitRootLogin prohibit-password` and `PasswordAuthentication no`
+- App auth/permission checks via repository tests (`clone_and_run`)
+- VM hardening checks via `checkbot` SSH verification script
 
 ---
 
-### Task 6: Deploy
+### Task 6: Deploy to hardened VM
 
-**Students do:**
+Students deploy updated backend to VM and validate:
 
-- Push their code to the VM (git clone/pull, or rsync)
-- `docker compose up -d` on the VM
-- Seed script runs on startup, DB is populated
-- Verify: all endpoints work when queried from outside the VM
+- service is reachable
+- read endpoints work
+- mastery endpoint works
+- security settings remain active
 
-**Autochecker:**
+Autochecker evidence:
 
-- `http_check` via `{server_ip}`: `GET /docs` → 200
-- `http_check`: `GET /items` → 200 with items in response
-- `http_check`: `POST /interactions` with valid body → 201
-- `http_check`: `GET /learners/L001/mastery` → 200 with valid structure
-- `http_check`: `GET /alignments` → 200
+- deployment `http_check` for public read/mastery endpoints
+- hardening verification via `checkbot`
 
 ---
 
-## What this teaches
+## Why this sequence works
 
-| Skill | How it shows up |
-|-------|----------------|
-| **Swagger / API docs** | Primary exploration tool in Task 0 |
-| **RESTful API design** | Status codes, validation, filters, pagination |
-| **Database** | Read existing schema, create a new table, write joins |
-| **Business logic** | Mastery calculation — aggregation across 3 tables |
-| **Testing** | TestClient, fixtures, edge cases, CI-like `pytest` runs |
-| **Linux ops** | Users, firewall, fail2ban, SSH hardening |
-| **Deployment** | Docker Compose on a real VM |
-| **Git workflow** | Issue → branch → PR → review → merge per task |
+1. Starts with observation and confidence (`/docs`) for first-time REST learners.
+2. First coding task is pattern-copying, not architecture invention.
+3. Business logic challenge (mastery) comes after data model is in place.
+4. Security is treated end-to-end: app auth + VM hardening together.
+5. Deployment closes the loop with machine-verifiable outcomes.
 
 ---
 
-## How this connects to future labs
+## Outcomes that are log/checker verifiable
 
-The alignment table + mastery endpoint are the intellectual core of the OBER system. Everything in Labs 4–9 builds on these three concepts: **items**, **outcomes**, and the **mastery score** that connects them.
+For reliable grading and dashboard tracking, each task should emit machine-checkable evidence:
 
-| Lab | What it adds to the platform |
-|-----|------------------------------|
-| 4 | AI integration — LLM auto-suggests outcome-item alignments |
-| 5 | Telegram bot — learners check their mastery, log interactions |
-| 6 | Data analytics + web dashboard — visualize mastery across all learners |
-| 7 | ML recommender — train a model that optimizes for mastery |
-| 8 | Flutter app — mobile learning companion |
-| 9 | Hackathon — ship a real feature |
+1. Process evidence: issues, PRs, approvals.
+2. Code evidence: models/endpoints/tests in repo.
+3. Runtime evidence: passing tests and deployed HTTP responses.
+4. Security evidence: remote checks through restricted `checkbot`.
+
+This keeps grading tied to reproducible signals, not manual screenshots.
 
 ---
 
 ## Open questions
 
-### 1. Starter code preparation
+1. Auth format for beginners:
+use simple API keys this lab, defer JWT to a later lab?
 
-The current Lab 2 codebase uses JSON file storage. We need to prepare the upgraded starter:
+2. Permission granularity:
+single write role vs separate instructor/admin role?
 
-- Add PostgreSQL + SQLAlchemy setup
-- Create models for items, outcomes, learners, interaction_logs
-- Seed script with anonymized namaz-recommender data
-- One example test file showing the DB fixture pattern
-- Remove the old JSON-reading service layer
+3. Alignment semantics naming:
+standardize on `promotes/verifies` now, or keep `assesses/promotes`?
 
-This is significant work. Should it be done as a template repo, or should Lab 2 end with a DB so Lab 3 starts cleaner?
+4. Required test count:
+fixed minimum number, or coverage by behavior checklist?
 
-### 2. Data anonymization
-
-The seed data comes from the real namaz-recommender (~85k learners, ~250 items). We need to:
-
-- Subsample to ~100 learners, ~100 items, ~5k interactions
-- Replace all IDs with opaque identifiers (L001, I001, O001)
-- Strip multilingual titles down to English only
-- Ensure the outcome hierarchy and interaction patterns are preserved
-
-### 3. Alignment seed data
-
-Should the alignments table start empty (students populate it via their new endpoints) or pre-seeded with some mappings? Starting empty means the mastery endpoint returns all zeros until they create alignments — which might actually be a good learning moment.
-
-### 4. Two difficulty levels
-
-Some students need step-by-step guidance, others want just the acceptance criteria. Consider collapsible `<details>` blocks for hints/steps.
-
-### 5. Task sizing
-
-6 tasks is ambitious. If it doesn't fit in one lab session:
-
-- Tasks 0–3 (API work) are the core — these must be required
-- Task 4 (tests) could be partially required (e.g., at least 6 tests) with the full 11 as a stretch
-- Tasks 5–6 (hardening + deploy) could be a take-home checkpoint before Lab 4
+5. Checkbot policy:
+command-restricted SSH key in this lab vs next lab?
