@@ -19,6 +19,12 @@ We start from a seeded backend:
 
 ---
 
+## Core model
+
+![OBER learner-item-outcome model](./lab/images/ober-domain-model.svg)
+
+---
+
 ## Design principles for this cohort
 
 1. Start with observation, not coding.

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="287" height="169" viewBox="0 0 287 169">
+  <rect width="287" height="169" fill="#000000"/>
+
+  <style>
+    .label { font-family: Arial, sans-serif; font-size: 16px; fill: #ffffff; dominant-baseline: middle; text-anchor: middle; }
+    .edge { stroke: #ffffff; stroke-width: 2; fill: none; }
+    .edge-blue { stroke: #4a77b7; stroke-width: 2; fill: none; }
+    .node { fill: #111111; stroke: #ffffff; stroke-width: 2; }
+    .node-blue { fill: #1f2937; stroke: #4a77b7; stroke-width: 2; }
+    .diamond { fill: #111111; stroke: #ffffff; stroke-width: 2; }
+    .diamond-blue { fill: #111111; stroke: #4a77b7; stroke-width: 2; }
+  </style>
+
+  <rect class="node" x="1" y="12" width="91" height="34"/>
+  <text class="label" x="46.5" y="29">Learner</text>
+
+  <rect class="node" x="1" y="119" width="91" height="34"/>
+  <text class="label" x="46.5" y="136">Item</text>
+
+  <rect class="node-blue" x="189" y="63" width="92" height="42"/>
+  <text class="label" x="235" y="84">Outcome</text>
+
+  <polygon class="diamond-blue" points="143,12 165,26 143,40 121,26"/>
+  <text class="label" x="143" y="26" font-size="13">masters</text>
+
+  <polygon class="diamond" points="34,59 56,73 34,87 12,73"/>
+  <text class="label" x="34" y="73" font-size="13">interacts</text>
+
+  <polygon class="diamond-blue" points="143,119 165,133 143,147 121,133"/>
+  <text class="label" x="143" y="133" font-size="13">aligns</text>
+
+  <line class="edge" x1="46.5" y1="46" x2="46.5" y2="59"/>
+  <line class="edge" x1="46.5" y1="87" x2="46.5" y2="119"/>
+
+  <line class="edge" x1="92" y1="29" x2="121" y2="26"/>
+
+  <line class="edge" x1="92" y1="136" x2="121" y2="133"/>
+
+  <line class="edge-blue" x1="165" y1="26" x2="189" y2="26"/>
+  <line class="edge-blue" x1="189" y1="26" x2="189" y2="63"/>
+
+  <line class="edge-blue" x1="165" y1="133" x2="189" y2="133"/>
+  <line class="edge-blue" x1="189" y1="133" x2="189" y2="105"/>
+</svg>
