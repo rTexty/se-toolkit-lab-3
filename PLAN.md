@@ -84,6 +84,11 @@ Students:
 - Create alignment mapping table between `items` and `outcomes`
 - Implement endpoints to read, add, and edit alignments
 
+Schema simplification (for this cohort):
+
+- Keep alignments as a simple mapping only (`item_id` <-> `outcome_id`)
+- Do not introduce relation types in Lab 3
+
 Suggested endpoints:
 
 - `GET /alignments`
@@ -116,8 +121,8 @@ This is one combined security task.
 
 App security:
 
-- Add basic auth for write operations
-- Add role/permission checks (read vs write/admin behavior)
+- Add API-key authentication for write operations
+- Add simple permission checks (read vs write/admin behavior)
 - Return proper auth statuses (`401`, `403`)
 
 Server security:
@@ -129,6 +134,10 @@ Server security:
 - Create dedicated `checkbot` SSH user (restricted, no sudo)
 
 Goal: connect API security and infrastructure security in one coherent task.
+
+Scope note:
+
+- If this task is too heavy, server hardening can be moved to Lab 4 while keeping API-key auth in Lab 3.
 
 ---
 
@@ -153,14 +162,16 @@ Students deploy the updated service to their VM and verify:
 
 ## Open questions
 
-1. Auth model for beginners:
-Use API key + simple roles, or JWT with claims?
-
-2. Hardening depth:
+1. Hardening depth:
 Should we require `PasswordAuthentication no` for everyone, or allow key-only root-disabled minimum?
 
-3. Checkbot restrictions:
+2. Checkbot restrictions:
 Command-restricted SSH key now, or in a later lab?
 
+3. CI placement:
+CI checks are a good candidate for Lab 4 if Lab 3 scope gets tight.
+
 4. Scope pressure:
-If needed, move some hardening checks to required minimum and keep advanced server controls as optional.
+If needed, split Task 5:
+- Lab 3: API-key auth + minimal permissions
+- Lab 4: full hardening checklist + CI
