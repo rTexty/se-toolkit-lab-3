@@ -39,7 +39,7 @@ We start from a seeded backend:
 
 Students must understand and apply:
 
-- Noun-based resource paths (`/interactions`, `/alignments`)
+- Noun-based resource paths (`/interactions`, `/verifications`)
 - Core methods (`GET`, `POST`, `PUT`)
 - Core statuses (`200`, `201`, `400/422`, `404`, `401`, `403`)
 - Query filters + pagination basics
@@ -86,27 +86,51 @@ Data flow note:
 
 Goal: first independent endpoint implementation by copying established project patterns.
 
+Potential tests (provided by instructors):
+
+- `GET /interactions` returns `200` and a list response.
+- `GET /interactions?learner_id=...` returns `200` and filtered records.
+- `GET /interactions?limit=20&offset=0` respects pagination parameters.
+
+Potential tests (students implement):
+
+- Combined filters (`learner_id` + `item_id`) behave correctly.
+- Invalid pagination/query values return validation errors (`422`).
+- Empty-result filters return `200` with an empty list.
+
 ---
 
-### Task 3: Add alignments table + endpoints
+### Task 3: Add verifications table + endpoints
 
 Students:
 
-- Create alignment mapping table between `items` and `outcomes`
-- Implement endpoints to read, add, and edit alignments
+- Create verification mapping table between `items` and `outcomes`
+- Implement endpoints to read, add, and edit verifications
 
 Schema simplification (for this cohort):
 
-- Keep alignments as a simple mapping only (`item_id` <-> `outcome_id`)
+- Keep verifications as a simple mapping only (`item_id` <-> `outcome_id`)
 - Do not introduce relation types in Lab 3
 
 Suggested endpoints:
 
-- `GET /alignments`
-- `POST /alignments`
-- `PUT /alignments/{id}`
+- `GET /verifications`
+- `POST /verifications`
+- `PUT /verifications/{id}`
 
 Goal: build the core OBER connection layer used by later labs.
+
+Potential tests (provided by instructors):
+
+- `POST /verifications` with valid IDs returns `201`.
+- `GET /verifications` returns `200` and list response.
+- `PUT /verifications/{id}` updates mapping and returns success.
+
+Potential tests (students implement):
+
+- Duplicate `(item_id, outcome_id)` mapping is rejected.
+- Invalid `item_id` or `outcome_id` is rejected.
+- Updated verification appears in subsequent read responses.
 
 ---
 
@@ -123,6 +147,18 @@ Suggested endpoints:
 - `GET /mastery/{learner_id}/total`
 
 Goal: implement meaningful product logic and prove correctness with tests.
+
+Potential tests (provided by instructors):
+
+- `GET /mastery/{learner_id}` returns `200` with required fields.
+- `GET /mastery/{learner_id}` scores are within `[0.0, 1.0]`.
+- Nonexistent learner returns `404`.
+
+Potential tests (students implement):
+
+- Happy path with deterministic fixture data.
+- No-interaction / no-verification cases produce expected defaults.
+- Threshold/aggregation behavior matches the intended formula.
 
 ---
 
@@ -150,6 +186,20 @@ Scope note:
 
 - If this task is too heavy, server hardening can be moved to Lab 4 while keeping API-key auth in Lab 3.
 
+Potential tests (provided by instructors):
+
+- Write endpoints without API key return `401`.
+- Write endpoints with invalid/insufficient key return `403`.
+- VM hardening checks via `checkbot` SSH:
+  - `checkbot` has no sudo access
+  - `fail2ban` is active
+  - `PermitRootLogin no` and `PasswordAuthentication no` are set
+
+Potential tests (students implement):
+
+- API auth tests for write endpoints (missing key, invalid key, valid key).
+- Permission tests separating read vs write behavior.
+
 ---
 
 ### Task 6: Deploy to hardened VM
@@ -160,11 +210,18 @@ Students deploy the updated service to their VM and verify:
 - Mastery endpoint works
 - Security configuration remains active after deployment
 
+Potential deployment checks (instructor/autochecker):
+
+- `GET /status` returns `200`.
+- `GET /interactions` returns `200`.
+- `GET /verifications` returns `200`.
+- `GET /mastery/{learner_id}` returns `200`.
+
 ---
 
 ## Optional tasks
 
-- Add `DELETE /alignments/{id}`
+- Add `DELETE /verifications/{id}`
 - Add OpenAPI examples for all new payloads
 - Add DB migration tooling (Alembic)
 - Add endpoint-level audit logging for write actions

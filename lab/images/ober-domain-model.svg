@@ -27,7 +27,7 @@
   <text class="label" x="34" y="73" font-size="13">interacts</text>
 
   <polygon class="diamond-blue" points="143,119 165,133 143,147 121,133"/>
-  <text class="label" x="143" y="133" font-size="13">aligns</text>
+  <text class="label" x="143" y="133" font-size="13">verifies</text>
 
   <line class="edge" x1="46.5" y1="46" x2="46.5" y2="59"/>
   <line class="edge" x1="46.5" y1="87" x2="46.5" y2="119"/>
