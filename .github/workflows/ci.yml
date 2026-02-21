@@ -40,3 +40,4 @@ jobs:
         env:
           API_TOKEN: my-secret-api-key
         run: uv run poe test
+
