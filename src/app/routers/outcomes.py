@@ -43,3 +43,4 @@ async def post_outcome(body: OutcomeCreate, session: AsyncSession = Depends(get_
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="learner_id or item_id does not reference an existing record",
         )
+
