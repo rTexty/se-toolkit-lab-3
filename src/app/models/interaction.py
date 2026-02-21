@@ -26,3 +26,5 @@ class InteractionModel(SQLModel):
     kind: str
     created_at: datetime  # BUG: should be 'created_at' to match the database column
 
+
+# trigger model check final
