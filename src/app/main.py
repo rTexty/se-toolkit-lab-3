@@ -3,7 +3,7 @@
 from fastapi import Depends, FastAPI
 
 from app.auth import verify_api_key
-from app.routers import interactions, items, learners
+from app.routers import interactions, items, learners, outcomes
 from app.settings import settings
 
 app = FastAPI(
@@ -17,6 +17,13 @@ app.include_router(
     items.router,
     prefix="/items",
     tags=["items"],
+    dependencies=[Depends(verify_api_key)],
+)
+
+app.include_router(
+    outcomes.router,
+    prefix="/outcomes",
+    tags=["outcomes"],
     dependencies=[Depends(verify_api_key)],
 )
 

@@ -31,6 +31,15 @@ CREATE TABLE IF NOT EXISTS interaction_logs (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Outcomes: records of learners' achievements on items
+CREATE TABLE IF NOT EXISTS outcomes (
+    id SERIAL PRIMARY KEY,
+    learner_id INTEGER NOT NULL REFERENCES learners(id),
+    item_id INTEGER NOT NULL REFERENCES items(id),
+    status VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Seed data: items (a course with labs, tasks, and steps)
 INSERT INTO items (type, title, description, attributes) VALUES
     ('course', 'Software Engineering', 'A course on SE principles and practices.', '{"instructors": ["Alice Johnson"]}');
